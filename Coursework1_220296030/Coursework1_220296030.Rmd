@@ -1,0 +1,176 @@
+---
+title: "MTH6139 Time Series" 
+subtitle: "Deaths England and Wales (Jan 2020 - Mar 2025)" 
+author: "Oscar John George Hope" 
+date: "Spring term 2025" 
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab 
+    highlight: tango
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, echo=FALSE}
+# This code will display the QMUL logo at the top right of the page
+# Do not change this code
+htmltools::img(src = knitr::image_uri("images/QMlogo.png"),
+               alt = 'logo',
+               style = 'position:absolute; top:0; right:0; padding:10px; width:20%;')
+```
+
+# Introduction
+
+## 1.1 The times series data of deaths in England and Wales (Jan 2020 - Mar 2025, weekly)
+
+```{r}
+death_statistics
+```
+
+The data above shows the deaths in England and Wales over the period
+from January 2020 to March 2025 in weekly intervals, the date on the ds
+axis is the final day of the week in measure.
+
+## 1.2 The purpose of this project.
+
+I have decided to undertake this project because my family have long
+time been in the funeral industry and as a result I have been doing lots
+of data interpretation with funerals, deaths and and hospitals since I
+came to university and in other statistical modules to get a better
+understanding for my parents business and potentially help, as far as I
+am aware they do not do any kind of modelling like this.
+
+## 1.3 Graph plots and tables
+
+### 1.3.1 forecasting
+
+```{r}
+plot(m,p)
+```
+
+```{r}
+print(forecast_table)
+```
+
+Graph:
+
+The graph above shows the historic data taken from the imported death
+statistics and an additional forecast for 28 periods after that in
+months. the graph in the historical part seems to be repeating annually
+with the same effect meaning one cycle is a year. From this we can see
+it could be described as a spiking upward sine function.
+
+I obtained this graph by doing the following code:\
+First i intalled the correct packages being 'remotes' which helps me
+install packages from 'GitHub through which i installed 'Prophet'
+package, the i loaded libraries i may need (Rcpp, prophet(TS
+forecasting), astsa (statistictial analysis not used here) and
+readxl(for reading my excel file)). Next i import my data
+'death_statistics.xlsx' using the 'readxl'. this i move to forecasting
+using 'prophet' to fit my data where i had to specify my data was weekly
+not daily, i stored this as 'm'. I then forcast the data in the future
+using 'make_future_dataframe' for 28 periods with frequency of months, I
+store this as 'f'. I can then use 'predict' for 'm' and 'f' to finally
+plot the predicted in 'p' against me TS model 'm'.
+
+Table:
+
+I wanted to see the values for the predicted values in the the graph as
+it is difficult to see. maily to see exactly what months these spikes
+occur as i could also see a small spike near the start of the year. From
+this table i could see that small spike in in the 4th month out of the
+yeah likely being near the 23rd due to the symmetry of the 3rd and 5th
+month. i also found the trough is in 7th and 8th month likely around the
+9th of the 8th month through symmetry again.
+
+I produced the table though only considering the future values by taking
+the dates after the most recent in the origional data using
+
+```{r}
+forecast_data <- p[p$ds >= max(death_statistics$ds), ]
+
+```
+
+Then I can take the relevant data from the columns of the forecast such
+as 'yhat_lower' 'yhat_upper' and 'yhat' and put it into a table before
+naming the columns.
+
+### 1.3.2 Data decomposition
+
+```{r}
+plot(decompose(ts_data_for_decompose))
+```
+
+Above is my decomposition of data for the period we can see the trend
+there is a spike at the start probably due to COVID but he seasonality
+is very similar to what we observed from our previous table meaning this
+data is reliant alone on its seasonal aspect not so much its trend later
+on after 2021. The seasonality as what might be expected suggest more
+deaths in the winter at the end of the year perhaps from illness like
+influenza and other viruses that are more prominent in the colder
+months.
+
+I created this by assigning values to a time series for frequency of 52
+due to it being in weeks starting at the start of 2020. and then
+plotting using the decompose of the time series into the plot.
+
+```{r}
+plot(dd.df$t, dd.df$x, type='l',xlab='Time',ylab='Deaths',main='Weekly Death Statistics')
+model <-lm(x~t,data=dd.df)
+lines(dd.df$t,fitted(model),col='green')
+```
+
+The graph above shows a plot of observations from the data frame against
+time in the data frame. I then put onto the line of linear regression
+for the time which i don't believe is very helpful due to the cyclical
+nature of the data. The line of linear regression is going down but very
+shallow gradient. I don't believe wide spread immortality in humans is
+very soon, this downward nature is likely due to the spike in deaths
+during COVID.
+
+I coded this graph by simply plotting from the data frame using the code
+in the R box above labelling as well. then making a linear model from
+the data from the data frame and fitting that as a line over the top of
+the other graph in green to keep it light hearted and not morbid.
+
+### 1.3.3 Other time frames
+
+```{r}
+f =prophet::make_future_dataframe(m, periods=1000, freq="day")
+p =predict(m, f)
+plot(m,p)
+```
+
+```{r}
+f =prophet::make_future_dataframe(m, periods=12, freq="quarter")
+p =predict(m, f)
+plot(m,p)
+```
+
+Above i have used two other time frames, day and quarter. The day
+requires me to have many periods, in this example 1000 which would can
+take a lot longer to load and it unnecessary to have make it a day due
+to the randomness of deaths in a day period and autocorrelation of the
+percent movements in day to day date being low I would consider this
+overkill especially as the original data is in weeks.\
+The other being every quarter does not give enough information, the
+users of this information will not be looking for 100 years into the
+future only likely 5 years making periods 20 is well within the power of
+R studios. also the graph does not look particularly helpful in
+identifying the individual peeks in January and April.
+
+# References
+
+-   Datacamp course:
+    <https://www.datacamp.com/courses/reporting-with-rmarkdown>
+-   RStudio reference: <https://rmarkdown.rstudio.com/lesson-1.html>
+-   More sophisticated reference:
+    <https://bookdown.org/yihui/rmarkdown/>
+-   Quick Start \| Prophet:
+    <https://www.statista.com/statistics/1111804/weekly-deaths-in-england-and-wales/>
+-   ts function - RDocumentation: <https://www.rdocumentation.org/>
+-   Forecasting: Principles and Practice (2nd ed):
+    <https://otexts.com/fpp2/tspatterns.html>
